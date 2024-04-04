@@ -52,11 +52,65 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(GPIO_Pin);
+  uint32_t current_time = HAL_GetTick();
+
+  //detectar y procesar las interrupciones. Se tiene en cuenta que se trabaja con tres pulsaciones para cada boton.
+    if (GPIO_Pin == S1_Pin){
+//si el boton esta resionado, se inicializa la variable Left_toggles para hacer la intermitencia.
+  		  if(counter_left==1){
+
+          	  HAL_UART_Transmit(&huart2, "S1\r\n", 4, 10);
+          	  left_toggles = 6;
+            }
+            else if(counter_left==2){
+          	  HAL_UART_Transmit(&huart2, "S1_toggles\r\n",12, 10);
+          	  left_toggles = 0xEEEEEEE;
+
+
+
+            }
+            else if (counter_left>=3){ // Despues de la tercer pulsacion se resetean las variables para contar
+          	  HAL_UART_Transmit(&huart2, "S1_off\r\n",8, 10);
+          	  counter_left=0;
+          	  left_toggles = 0;
+
+
+
+            }
+
+
+
+
+    }
+
+
+
+
+  	  }
+
+  /* NOTE: This function should not be modified, when the callback is needed,
+           the HAL_GPIO_EXTI_Callback could be implemented in the user file
+   */
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+//funcion para intermitenica de funcionamiento. se utiliza la funcion HAL_GetTick y la vraible Toggles que se establecio en las interrupciones.
+void heartbeat (void){
+
+	static uint32_t heartbeat_tick = 0;
+	if(heartbeat_tick  < HAL_GetTick() ){
+		heartbeat_tick = HAL_GetTick() + 500;
+		HAL_GPIO_TogglePin(D1_GPIO_Port, D1_Pin);
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -96,6 +150,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  heartbeat();
+	  turn_signal_left();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
